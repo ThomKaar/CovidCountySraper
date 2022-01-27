@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import requests
 from string import Template
 from bs4 import BeautifulSoup
@@ -24,11 +25,17 @@ def main():
         countyDiv = soup.find('div', class_='zRzGke EA71Tc pym81b')
         casesDiv = countyDiv.find('div', class_='fNm5wd qs41qe')
         caseCount = parseInt(casesDiv.find('div', class_='UvMayb').text)
-        newCases = parseInt(casesDiv.find('strong').text)
+        newCases = casesDiv.find('strong')
+        newCasesCount = None
+        if newCases is not None:
+            newCasesCount = parseInt(newCases.text)
 
         deathsDiv = countyDiv.find('div', class_='fNm5wd ckqIZ')
         deathCount = parseInt(deathsDiv.find('div', class_='UvMayb').text)
-        newDeaths = parseInt(deathsDiv.find('strong').text)
+        newDeathsCount = None
+        newDeaths = deathsDiv.find('strong')
+        if newDeaths is not None:
+            newDeathsCount = parseInt(newDeaths.text)
 
         date = datetime.datetime.now()
 
@@ -37,19 +44,22 @@ def main():
         d['County'] = county['countyName']
         d['Date'] = date
         d['Total Cases'] = caseCount
-        d['New Cases'] = newCases
+        if newCasesCount is not None:
+            d['New Cases'] = newCasesCount
         d['Total Deaths'] = deathCount
-        d['New Deaths'] = newDeaths
+        if newDeathsCount is not None:
+            d['New Deaths'] = newDeathsCount
+        if newCasesCount is None or newDeathsCount is None:
+            print('No new data at this time, not writing to database for county ' + county['countyName'])
+            return 1
         county_data_list.append(d)
-        # totalCases = casesDiv[0].find('div', class_='UvMayb')
     filename = 'CACountyCovidData.csv'
-    with open(filename, 'w', newline='') as f:
+    with open(filename, 'a', newline='') as f:
         w = csv.DictWriter(f,['County', 'Date', 'Total Cases', 'New Cases', 'Total Deaths', 'New Deaths'])
         w.writeheader()
 
         w.writerows(county_data_list)
     return 0
-# Using the special variable
-# __name__
+
 if __name__=="__main__":
     main()
